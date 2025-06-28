@@ -16,7 +16,8 @@ namespace SPM_RNG_Drop_Calculator
             Fire_Burst = 0x41,
             Shroom_Shake = 0x50,
             Catch_Card = 0x57,
-            Hot_Sauce = 0x6d
+            Hot_Sauce = 0x6d,
+            Power_Steak = 0x75,
         }
         static Dictionary<int, string> enemyNames = new Dictionary<int, string>();
 
@@ -176,7 +177,7 @@ namespace SPM_RNG_Drop_Calculator
             { 0x00D7, "Lovely Chocolate" },
         };
 
-        static bool CompareItemLists(List<int> drops, List<int> intendedDrops)
+        /*static bool CompareItemLists(List<int> drops, List<int> intendedDrops)
         {
             List<int> copyDrops = drops.ToList();
             foreach(var drop in intendedDrops)
@@ -187,6 +188,17 @@ namespace SPM_RNG_Drop_Calculator
                     copyDrops.Remove(drop);
             }
 
+            return true;
+        }*/
+        static bool VerifyIntendedDrops(List<int> drops, List<int> intendedDrops)
+        {
+            foreach (var drop in intendedDrops)
+            {
+                if (!drops.Contains(drop))
+                {
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -229,7 +241,7 @@ namespace SPM_RNG_Drop_Calculator
                     throw new Exception("Ran out of RNG values");
                 }
 
-            } while (!CompareItemLists(drops, intendedDrops));
+            } while (!VerifyIntendedDrops(drops, intendedDrops));
 
             return increments;
         }
@@ -315,17 +327,15 @@ namespace SPM_RNG_Drop_Calculator
             }
         }
 
-        static uint[] GetNextRNGSeeds(List<Enemy> enemies, List<int> intendedDrops, int n, uint incrementsOffset=0 /*index for example */)
+        static (long, uint)[] GetNextRNGSeeds(List<Enemy> enemies, List<int> intendedDrops, int n, uint incrementsOffset=0 /*index for example */)
         {
-            List<uint> seeds = new();
+            List<(long, uint)> seeds = new();
             long totalIncrements = incrementsOffset;
             for (int i = 0; i < n; i++)
             {
                 totalIncrements += GetSpecificDrops(enemies, intendedDrops);
-                //PrintDrops(enemies);
-                Console.WriteLine($"Index: {totalIncrements}");
-                seeds.Add(SpmSystem.randomSeed); totalIncrements++;
-                //SpmSystem._rand_advance();
+                seeds.Add((totalIncrements,SpmSystem.randomSeed));
+                totalIncrements++;
             }
             return seeds.ToArray();
         }
@@ -339,26 +349,24 @@ namespace SPM_RNG_Drop_Calculator
             //return;
 
             // Initialize RNG seed
-            SpmSystem.randomSeed = 0x9ff844c8;
+            SpmSystem.randomSeed = 0xdb7dc44b;
             
             // Initialize Enemy module
             Enemy.InitializeEnemies("T:\\spm-tas\\evt-disassembler-master\\jp0.raw", 0x803d14f0, 0x803dee48);
             
             // Initialize enemy list
-            List<Enemy> enemies = Enemy.EnemiesFromSetupFile("Z:\\Wii Emulation\\Games\\wj0orkdir\\files\\setup\\he1_01.dat");
+            List<Enemy> enemies = Enemy.EnemiesFromSetupFile("Z:\\Wii Emulation\\Games\\wj0orkdir\\files\\setup\\sp3_04.dat");
 
             // Initialize intended drop list
             List<int> intendedDrops = new List<int>()
             {
-                (int)Item.Catch_Card,
-                (int)Item.Catch_Card,
-                (int)Item.Catch_Card
+                (int)Item.Hot_Sauce
             };
 
-            int count = 1;
-            foreach(var seed in GetNextRNGSeeds(enemies, intendedDrops, count, 0))
+            int count = 1000;
+            foreach(var entry in GetNextRNGSeeds(enemies, intendedDrops, count, 0))
             {
-                Console.WriteLine($"Seed: {seed:x}");
+                Console.WriteLine($"Index: {entry.Item1}, Seed: {entry.Item2:x}");
             }
             //GetMostDrops(enemies, (int)Item.Fire_Burst);
         }
