@@ -8,21 +8,21 @@ namespace SPM_RNG_Drop_Calculator
 {
     public static class SpmSystem
     {
-        public static uint randomSeed = 1;
+        public static u32 randomSeed = 1;
 
-        public static uint _rand_advance()
+        public static u32 _rand_advance()
         {
             randomSeed = randomSeed * 0x5d588b65 + 1;
             return randomSeed;
         }
 
-        private static int _rand(int max)
+        private static s32 _rand(s32 max)
         {
-            uint divisor;
-            uint res;
+            u32 divisor;
+            u32 res;
 
             divisor = 0xffffffff;
-            divisor /= (uint)(max + 1);
+            divisor /= (u32)(max + 1);
             if (divisor < 1)
                 divisor = 1;
 
@@ -31,10 +31,10 @@ namespace SPM_RNG_Drop_Calculator
                 res = _rand_advance() / divisor;
             } while (res >= max + 1);
 
-            return (int)res;
+            return (s32)res;
         }
 
-        public static int irand(int max)
+        public static s32 irand(s32 max)
         {
             max = Math.Abs(max);
 
@@ -59,12 +59,12 @@ namespace SPM_RNG_Drop_Calculator
             }
         }
 
-        private static float _frand()
+        private static f32 _frand()
         {
             return irand(0x7fff) / 32767.0f;
         }
 
-        public static float frand(float limit)
+        public static f32 frand(f32 limit)
         {
             return limit * _frand();
         }

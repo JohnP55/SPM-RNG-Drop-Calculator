@@ -1,4 +1,14 @@
-﻿using System;
+﻿global using s8 = sbyte;
+global using u8 = byte;
+global using s16 = short;
+global using u16 = ushort;
+global using s32 = int;
+global using u32 = uint;
+global using s64 = long;
+global using u64 = ulong;
+global using f32 = float;
+global using f64 = double;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -19,9 +29,9 @@ namespace SPM_RNG_Drop_Calculator
             Hot_Sauce = 0x6d,
             Power_Steak = 0x75,
         }
-        static Dictionary<int, string> enemyNames = new Dictionary<int, string>();
+        static Dictionary<s32, string> enemyNames = new Dictionary<s32, string>();
 
-        static Dictionary<int, string> items = new Dictionary<int, string>
+        static Dictionary<s32, string> items = new Dictionary<s32, string>
         {
             { 0x0000, "NULL" },
             { 0x0041, "Fire Burst" },
@@ -177,9 +187,9 @@ namespace SPM_RNG_Drop_Calculator
             { 0x00D7, "Lovely Chocolate" },
         };
 
-        /*static bool CompareItemLists(List<int> drops, List<int> intendedDrops)
+        /*static bool CompareItemLists(List<s32> drops, List<s32> intendedDrops)
         {
-            List<int> copyDrops = drops.ToList();
+            List<s32> copyDrops = drops.ToList();
             foreach(var drop in intendedDrops)
             {
                 if (!copyDrops.Contains(drop))
@@ -190,7 +200,7 @@ namespace SPM_RNG_Drop_Calculator
 
             return true;
         }*/
-        static bool VerifyIntendedDrops(List<int> drops, List<int> intendedDrops)
+        static bool VerifyIntendedDrops(List<s32> drops, List<s32> intendedDrops)
         {
             foreach (var drop in intendedDrops)
             {
@@ -211,12 +221,12 @@ namespace SPM_RNG_Drop_Calculator
                 Console.WriteLine($"{enemy.TemplateId}: {enemy.GetDrop()}");
         }
 
-        static long GetSpecificDrops(List<Enemy> enemies, List<int> intendedDrops)
+        static s64 GetSpecificDrops(List<Enemy> enemies, List<s32> intendedDrops)
         {
-            List<int> drops = new List<int>(intendedDrops.Count);
+            List<s32> drops = new List<s32>(intendedDrops.Count);
 
-            uint backupSeed;
-            long increments = -1;
+            u32 backupSeed;
+            s64 increments = -1;
             do
             {
                 increments++;
@@ -236,7 +246,7 @@ namespace SPM_RNG_Drop_Calculator
                 // Restore seed
                 SpmSystem.randomSeed = backupSeed;
 
-                if (increments > uint.MaxValue)
+                if (increments > u32.MaxValue)
                 {
                     throw new Exception("Ran out of RNG values");
                 }
@@ -246,14 +256,14 @@ namespace SPM_RNG_Drop_Calculator
             return increments;
         }
 
-        static void GetMostDrops(List<Enemy> enemies, int intendedItem)
+        static void GetMostDrops(List<Enemy> enemies, s32 intendedItem)
         {
-            List<int> drops = new List<int>(enemies.Count);
+            List<s32> drops = new List<s32>(enemies.Count);
 
-            uint backupSeed;
-            long increments = -1;
+            u32 backupSeed;
+            s64 increments = -1;
 
-            (uint seed, int count) = (0, 0);
+            (u32 seed, s32 count) = (0, 0);
             do
             {
                 increments++;
@@ -273,15 +283,15 @@ namespace SPM_RNG_Drop_Calculator
                 // Restore seed
                 SpmSystem.randomSeed = backupSeed;
 
-                Func<int, bool> pred;
-                if (intendedItem == (int)Item.Wildcard)
+                Func<s32, bool> pred;
+                if (intendedItem == (s32)Item.Wildcard)
                     // Go absolutely primal
                     pred = x => x != 0;
                 else
                     pred = x => x == intendedItem;
 
 
-                int itemCount = drops.Count(pred);
+                s32 itemCount = drops.Count(pred);
                 if (itemCount > count)
                 {
                     seed = SpmSystem.randomSeed;
@@ -297,7 +307,7 @@ namespace SPM_RNG_Drop_Calculator
         }
         static void DumpEnemyData()
         {
-            (string name, string path, uint p_npcTribes, uint p_npcEnemyTemplates)[] defs = new (string, string, uint, uint)[]
+            (string name, string path, u32 p_npcTribes, u32 p_npcEnemyTemplates)[] defs = new (string, string, u32, u32)[]
             {
                 ("PAL", "T:\\spm-tas\\evt-disassembler-master\\pal.raw", 0x8043bf30, 0x80449888),
                 ("NTSC-U Revision 0", "T:\\spm-tas\\evt-disassembler-master\\us0.raw", 0x803fc290, 0x80409be8),
@@ -327,11 +337,11 @@ namespace SPM_RNG_Drop_Calculator
             }
         }
 
-        static (long, uint)[] GetNextRNGSeeds(List<Enemy> enemies, List<int> intendedDrops, int n, uint incrementsOffset=0 /*index for example */)
+        static (s64, u32)[] GetNextRNGSeeds(List<Enemy> enemies, List<s32> intendedDrops, s32 n, u32 incrementsOffset=0 /*index for example */)
         {
-            List<(long, uint)> seeds = new();
-            long totalIncrements = incrementsOffset;
-            for (int i = 0; i < n; i++)
+            List<(s64, u32)> seeds = new();
+            s64 totalIncrements = incrementsOffset;
+            for (s32 i = 0; i < n; i++)
             {
                 totalIncrements += GetSpecificDrops(enemies, intendedDrops);
                 seeds.Add((totalIncrements,SpmSystem.randomSeed));
@@ -358,17 +368,17 @@ namespace SPM_RNG_Drop_Calculator
             List<Enemy> enemies = Enemy.EnemiesFromSetupFile("Z:\\Wii Emulation\\Games\\wj0orkdir\\files\\setup\\sp3_04.dat");
 
             // Initialize intended drop list
-            List<int> intendedDrops = new List<int>()
+            List<s32> intendedDrops = new List<s32>()
             {
-                (int)Item.Hot_Sauce
+                (s32)Item.Hot_Sauce
             };
 
-            int count = 1000;
+            s32 count = 1000;
             foreach(var entry in GetNextRNGSeeds(enemies, intendedDrops, count, 0))
             {
                 Console.WriteLine($"Index: {entry.Item1}, Seed: {entry.Item2:x}");
             }
-            //GetMostDrops(enemies, (int)Item.Fire_Burst);
+            //GetMostDrops(enemies, (s32)Item.Fire_Burst);
         }
     }
 }

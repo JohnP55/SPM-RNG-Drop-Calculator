@@ -8,16 +8,16 @@ namespace SPM_RNG_Drop_Calculator
 {
     static class Utils
     {
-        public static int ReadInt16(byte[] buffer, int offset)
+        public static s32 ReadS16(u8[] buffer, s32 offset)
         {
             return buffer[offset] << 8 | buffer[offset+1];
         }
-        public static int ReadInt32(byte[] buffer, int offset)
+        public static s32 ReadS32(u8[] buffer, s32 offset)
         {
             return buffer[offset] << 24 | buffer[offset + 1] << 16 | buffer[offset + 2] << 8 | buffer[offset + 3];
         }
 
-        public static string ReadASCII(byte[] buffer, int offset)
+        public static string ReadASCII(u8[] buffer, s32 offset)
         {
             StringBuilder sb = new StringBuilder();
 

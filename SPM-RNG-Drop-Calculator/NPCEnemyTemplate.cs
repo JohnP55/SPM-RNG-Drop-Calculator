@@ -9,10 +9,10 @@ namespace SPM_RNG_Drop_Calculator
 {
     public struct DropItem : IEquatable<DropItem>
     {
-        public int ItemId;
-        public int Chance;
+        public s32 ItemId;
+        public s32 Chance;
 
-        public DropItem(int itemId, int chance)
+        public DropItem(s32 itemId, s32 chance)
         {
             ItemId = itemId;
             Chance = chance;
@@ -41,39 +41,39 @@ namespace SPM_RNG_Drop_Calculator
     public class Enemy
     {
         public static List<Enemy>? Enemies { get; private set; }
-        public static void InitializeEnemies(string ramdumpPath, uint p_npcTribes, uint p_npcEnemyTemplates)
+        public static void InitializeEnemies(string ramdumpPath, u32 p_npcTribes, u32 p_npcEnemyTemplates)
         {
             p_npcEnemyTemplates &= 0xffffff;
             p_npcTribes &= 0xffffff;
 
             Enemies = new List<Enemy>();
 
-            const int NPCTRIBE_SIZE = 0x68;
-            const int NPCTRIBE_DROPITEM_CHANCE = 0x4e;
-            const int NPCTRIBE_DROPITEM_LIST_PTR = 0x50;
+            const s32 NPCTRIBE_SIZE = 0x68;
+            const s32 NPCTRIBE_DROPITEM_CHANCE = 0x4e;
+            const s32 NPCTRIBE_DROPITEM_LIST_PTR = 0x50;
 
-            const int NB_NPC_ENEMY_TEMPLATES = 434;
-            const int NPCENEMYTEMPLATE_SIZE = 0x68;
-            const int NPCENEMYTEMPLATE_TRIBE_ID = 0x14;
+            const s32 NB_NPC_ENEMY_TEMPLATES = 434;
+            const s32 NPCENEMYTEMPLATE_SIZE = 0x68;
+            const s32 NPCENEMYTEMPLATE_TRIBE_ID = 0x14;
 
-            const int DROPITEM_SIZE = 0x8;
+            const s32 DROPITEM_SIZE = 0x8;
 
-            byte[] ramdump = File.ReadAllBytes(ramdumpPath);
+            u8[] ramdump = File.ReadAllBytes(ramdumpPath);
 
-            for (int i = 0; i < NB_NPC_ENEMY_TEMPLATES; i++)
+            for (s32 i = 0; i < NB_NPC_ENEMY_TEMPLATES; i++)
             {
-                int tribeId = Utils.ReadInt32(ramdump, (int)(p_npcEnemyTemplates + i * NPCENEMYTEMPLATE_SIZE + NPCENEMYTEMPLATE_TRIBE_ID));
-                int dropItemChance = Utils.ReadInt16(ramdump, (int)(p_npcTribes + tribeId * NPCTRIBE_SIZE + NPCTRIBE_DROPITEM_CHANCE));
-                int p_dropItemList = Utils.ReadInt32(ramdump, (int)(p_npcTribes + tribeId * NPCTRIBE_SIZE + NPCTRIBE_DROPITEM_LIST_PTR)) & 0xffffff;
+                s32 tribeId = Utils.ReadS32(ramdump, (s32)(p_npcEnemyTemplates + i * NPCENEMYTEMPLATE_SIZE + NPCENEMYTEMPLATE_TRIBE_ID));
+                s32 dropItemChance = Utils.ReadS16(ramdump, (s32)(p_npcTribes + tribeId * NPCTRIBE_SIZE + NPCTRIBE_DROPITEM_CHANCE));
+                s32 p_dropItemList = Utils.ReadS32(ramdump, (s32)(p_npcTribes + tribeId * NPCTRIBE_SIZE + NPCTRIBE_DROPITEM_LIST_PTR)) & 0xffffff;
 
                 List<DropItem> dropItemList = new List<DropItem>();
-                int itemId = -1;
-                int chance = -1;
+                s32 itemId = -1;
+                s32 chance = -1;
 
-                for (int j = 0; itemId != 0; j += DROPITEM_SIZE)
+                for (s32 j = 0; itemId != 0; j += DROPITEM_SIZE)
                 {
-                    itemId = Utils.ReadInt32(ramdump, p_dropItemList + j);
-                    chance = Utils.ReadInt32(ramdump, p_dropItemList + j + 4);
+                    itemId = Utils.ReadS32(ramdump, p_dropItemList + j);
+                    chance = Utils.ReadS32(ramdump, p_dropItemList + j + 4);
                     dropItemList.Add(new DropItem(itemId, chance));
                 }
                 Enemies.Add(new Enemy(i, dropItemList, dropItemChance));
@@ -84,18 +84,18 @@ namespace SPM_RNG_Drop_Calculator
         {
             Debug.Assert(Enemies is not null, "Enemy data list was not initialized.");
 
-            byte[] setupData = File.ReadAllBytes(setupFilePath);
+            u8[] setupData = File.ReadAllBytes(setupFilePath);
 
-            const int SETUP_NB_ENEMIES = 100;
-            const int SETUP_ENEMY_LIST_OFFSET = 0x4;
-            const int SETUPENEMY_SIZE = 0x70;
-            const int SETUPENEMY_ID_OFFSET = 0xC;
+            const s32 SETUP_NB_ENEMIES = 100;
+            const s32 SETUP_ENEMY_LIST_OFFSET = 0x4;
+            const s32 SETUPENEMY_SIZE = 0x70;
+            const s32 SETUPENEMY_ID_OFFSET = 0xC;
 
             List<Enemy> enemies = new List<Enemy>();
 
-            for (int i = 0; i < SETUP_NB_ENEMIES; i++)
+            for (s32 i = 0; i < SETUP_NB_ENEMIES; i++)
             {
-                int templateId = Utils.ReadInt32(setupData, SETUP_ENEMY_LIST_OFFSET + i * SETUPENEMY_SIZE + SETUPENEMY_ID_OFFSET);
+                s32 templateId = Utils.ReadS32(setupData, SETUP_ENEMY_LIST_OFFSET + i * SETUPENEMY_SIZE + SETUPENEMY_ID_OFFSET);
                 if (templateId == 0) break; // Technically template id 0 is a real template but 1- it's unused and 2- this is literally how the game knows the list is over so ratio
 
                 enemies.Add(Enemies[templateId]);
@@ -104,28 +104,28 @@ namespace SPM_RNG_Drop_Calculator
             return enemies;
         }
 
-        public int TemplateId { get; set; }
+        public s32 TemplateId { get; set; }
         public List<DropItem> DropItemList { get; } = new List<DropItem>();
-        public int DropItemChance { get; set; }
+        public s32 DropItemChance { get; set; }
 
-        public Enemy(int templateId, IEnumerable<DropItem> dropItemList, int dropItemChance)
+        public Enemy(s32 templateId, IEnumerable<DropItem> dropItemList, s32 dropItemChance)
         {
             TemplateId = templateId;
             DropItemList.AddRange(dropItemList);
             DropItemChance = dropItemChance;
         }
 
-        public int GetDrop()
+        public s32 GetDrop()
         {
-            int dropItemId = 0;
+            s32 dropItemId = 0;
 
             if (DropItemChance != 0 && SpmSystem.irand(99) < DropItemChance && DropItemList.Count > 0)
             {
-                int chanceTotal = 0;
-                int[] idTable = new int[12];
-                int index_max = 0;
+                s32 chanceTotal = 0;
+                s32[] idTable = new s32[12];
+                s32 index_max = 0;
 
-                for (int i = 0; i < 12; i++)
+                for (s32 i = 0; i < 12; i++)
                 {
                     idTable[i] = DropItemList[i].ItemId;
                     chanceTotal += DropItemList[i].Chance;
@@ -138,9 +138,9 @@ namespace SPM_RNG_Drop_Calculator
                     throw new Exception("index<12: ドロップアイテムリストのリスト数オーバー");
                 }
 
-                int result = SpmSystem.irand(chanceTotal - 1);
+                s32 result = SpmSystem.irand(chanceTotal - 1);
 
-                int dropId = 0;
+                s32 dropId = 0;
 
                 if (index_max > 0)
                 {
